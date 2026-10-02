@@ -20,6 +20,7 @@ struct ReaderScreen: View {
     @ObservedObject private var settings = ReaderSettings.shared
     @EnvironmentObject private var player: PlayerModel
     @EnvironmentObject private var annotations: AnnotationStore
+    @EnvironmentObject private var downloads: DownloadManager
     @Environment(\.dismiss) private var dismiss
     @State private var epub: EPUBBook?
     @State private var sheet: ReaderSheet?
@@ -280,7 +281,9 @@ struct ReaderScreen: View {
         case .appearance:
             AppearanceSheet(model: model)
         case .music:
-            MusicSheet().environmentObject(player)
+            MusicSheet()
+                .environmentObject(player)
+                .environmentObject(downloads)
         case .nowPlaying:
             NowPlayingView().environmentObject(player)
         case .note(let n):

@@ -6,6 +6,7 @@ struct FolioApp: App {
     @StateObject private var player = PlayerModel()
     @StateObject private var annotations = AnnotationStore()
     @StateObject private var router = AppRouter()
+    @StateObject private var downloads = DownloadManager()
     @Environment(\.scenePhase) private var scenePhase
 
     init() { FolioApp.configureAppearance() }
@@ -17,9 +18,15 @@ struct FolioApp: App {
                 .environmentObject(player)
                 .environmentObject(annotations)
                 .environmentObject(router)
+                .environmentObject(downloads)
                 .preferredColorScheme(.dark)
-                // Books and songs shared from other apps ("Open in Folio")
+                // Books and songs shared from other apps ("Open in Folio"),
+                // and folio://download?url=… links (e.g. from a Shortcut)
                 .onOpenURL { url in
+                    if url.scheme?.lowercased() == "folio" {
+                        handleDeepLink(url)
+                        return
+                    }
                     Importer.importFiles([url]) {
                         library.refresh()
                         player.refresh()
@@ -45,6 +52,14 @@ struct FolioApp: App {
                 break
             }
         }
+    }
+
+    private func handleDeepLink(_ url: URL) {
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        guard let link = items.first(where: { $0.name == "url" })?.value, !link.isEmpty else { return }
+        downloads.enqueue(link)
+        router.selectedTab = 1
+        if router.reader == nil { router.showDownloads = true }
     }
 
     private static func configureAppearance() {
@@ -79,15 +94,16 @@ struct RootView: View {
     @EnvironmentObject private var player: PlayerModel
     @EnvironmentObject private var annotations: AnnotationStore
     @EnvironmentObject private var router: AppRouter
-    @State private var tab = 0
+    @EnvironmentObject private var downloads: DownloadManager
 
     var body: some View {
-        TabView(selection: $tab) {
+        TabView(selection: $router.selectedTab) {
             LibraryView()
                 .tabItem { Label("Library", systemImage: "books.vertical.fill") }
                 .tag(0)
             MusicView()
                 .tabItem { Label("Music", systemImage: "music.note") }
+                .badge(downloads.activeCount)
                 .tag(1)
             MarksView()
                 .tabItem { Label("Highlights", systemImage: "highlighter") }
@@ -100,6 +116,14 @@ struct RootView: View {
                 .environmentObject(player)
                 .environmentObject(annotations)
                 .environmentObject(router)
+                .environmentObject(downloads)
+        }
+        .sheet(isPresented: $router.showDownloads) {
+            DownloadView().environmentObject(downloads)
+        }
+        .onAppear {
+            let p = player
+            downloads.onNewSongs = { p.refresh() }
         }
     }
 }

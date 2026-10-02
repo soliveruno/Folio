@@ -314,6 +314,8 @@ struct ReaderRequest: Identifiable {
 
 final class AppRouter: ObservableObject {
     @Published var reader: ReaderRequest?
+    @Published var selectedTab = 0
+    @Published var showDownloads = false
 
     func open(_ book: Book, at target: ReaderTarget? = nil) {
         reader = ReaderRequest(book: book, target: target)

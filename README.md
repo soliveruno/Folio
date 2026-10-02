@@ -1,6 +1,6 @@
 # Folio
 
-Music player + EPUB/PDF reader in one app, so you can listen while you read. SwiftUI, iOS 15+.
+Music player + EPUB/PDF reader in one app, so you can listen while you read, with yt-dlp built in for downloading music. SwiftUI, iOS 15+.
 It combines SimplePlayer and SimpleReader and adds new reading features. Its bundle ID is
 `com.junki3lab.folio`, so it installs next to your existing apps instead of replacing them.
 
@@ -25,6 +25,18 @@ It combines SimplePlayer and SimpleReader and adds new reading features. Its bun
 - Shuffle, repeat (all / one), scrubber, system volume, lock screen and Control Center controls
 - Keeps playing in the background, pauses when headphones are unplugged and resumes after calls
 
+**Downloads (yt-dlp built in)**
+- Music tab → ⬇︎ button: paste a link from YouTube, SoundCloud, Bandcamp or another of the
+  [sites yt-dlp supports](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md). The audio is saved as
+  M4A with title, artist and cover art, and appears in Music. Playlist links download every track
+- yt-dlp runs inside the app on a built-in copy of Python. YouTube's JavaScript challenges are solved with
+  iOS's own JavaScriptCore, because apps can't run Deno or Node
+- **Update yt-dlp** from the same screen, which downloads the newest version from PyPI. No rebuild needed (it applies
+  after you reopen Folio)
+- From Safari or other apps, make a Shortcut that opens `folio://download?url=` followed by the link (e.g. "Share Sheet → URL → Open URLs")
+- There's no ffmpeg on iOS, so sites that only offer WebM/Opus audio can't be converted. Folio says when that happens
+- Only download content you have the right to
+
 **Battery**
 - No timers run while music is paused or the app is in the background. The lock screen keeps time on its own
 - The playback clock updates the UI once per second, and only redraws the small time views
@@ -35,6 +47,7 @@ It combines SimplePlayer and SimpleReader and adds new reading features. Its bun
 ## Getting the .ipa (no Mac needed)
 
 1. Create a new GitHub repo and upload everything in this folder. Keep the hidden `.github` folder.
+   The build downloads Python for iOS and the latest yt-dlp by itself, so each rebuild also updates yt-dlp.
 2. Open the repo's **Actions** tab. The "Build unsigned IPA" workflow runs on every push, or you can press **Run workflow**.
 3. When it finishes (about 3–5 minutes), download the **Folio-ipa** artifact and unzip it to get `Folio.ipa`.
 4. Sideload it with Sideloadly or AltStore, the same way as SimplePlayer.
@@ -51,6 +64,7 @@ Works with books that have no DRM.
 
 ```sh
 brew install xcodegen
+bash scripts/fetch_python.sh   # downloads Python for iOS + yt-dlp (not stored in the repo)
 xcodegen generate
 open Folio.xcodeproj
 ```

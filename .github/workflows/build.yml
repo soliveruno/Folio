@@ -10,6 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Fetch Python runtime + yt-dlp
+        run: bash scripts/fetch_python.sh
+
       - name: Install XcodeGen
         run: brew install xcodegen
 

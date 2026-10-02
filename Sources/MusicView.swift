@@ -19,6 +19,8 @@ struct SongListView: View {
     @State private var search = ""
     @State private var showImporter = false
     @State private var showNowPlaying = false
+    @State private var showDownloads = false
+    @EnvironmentObject private var downloads: DownloadManager
 
     private var filtered: [Song] {
         let q = search.trimmingCharacters(in: .whitespaces)
@@ -72,10 +74,15 @@ struct SongListView: View {
         }
         .background(Palette.background.ignoresSafeArea())
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button { showDownloads = true } label: {
+                    Image(systemName: downloads.activeCount > 0 ? "arrow.down.circle.fill" : "arrow.down.circle")
+                }
+                .accessibilityLabel("Download from a link")
                 Button { showImporter = true } label: { Image(systemName: "plus") }
             }
         }
+        .sheet(isPresented: $showDownloads) { DownloadView().environmentObject(downloads) }
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.audio], allowsMultipleSelection: true) { result in
             if case .success(let urls) = result {
                 Importer.importFiles(urls) { player.refresh() }
@@ -91,7 +98,7 @@ struct SongListView: View {
                 .font(.system(size: 52, weight: .light))
                 .foregroundStyle(Palette.accent)
             Text("No music yet").font(.title3.weight(.semibold))
-            Text("Tap + to import MP3, M4A, FLAC or WAV files,\nor copy them in through Finder.")
+            Text("Import MP3, M4A, FLAC or WAV files,\nor download songs from a link with yt-dlp.")
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
@@ -104,6 +111,12 @@ struct SongListView: View {
                     .foregroundColor(.black)
             }
             .padding(.top, 6)
+            Button { showDownloads = true } label: {
+                Label("Download from a link", systemImage: "arrow.down.circle")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Palette.accent)
+            }
+            .padding(.top, 2)
             Spacer()
         }
         .frame(maxWidth: .infinity)

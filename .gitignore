@@ -1,0 +1,5 @@
+# Downloaded by scripts/fetch_python.sh
+Python.xcframework/
+Python/app_packages/
+*.xcodeproj/
+build/
